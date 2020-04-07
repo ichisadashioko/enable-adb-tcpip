@@ -5,6 +5,7 @@ import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
@@ -19,30 +20,57 @@ public class MainActivity extends Activity {
     static final String ADB_PORT = "5555";
     static final String ADB_PROCESS_NAME = "adbd";
     static final String ADB_PORT_PROP_NAME = "service.adb.tcp.port";
+    static final String INDENT = "  ";
 
     EditText ipAddressET;
+    TextView logTV;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        ipAddressET = (EditText) findViewById(R.id.ip_address);
+        showIpAddress(null);
+        logTV = (TextView) findViewById(R.id.log);
+        Logger.LOG_TEXT_VIEW = logTV;
     }
 
-    public void setIpAddressETAndDisplayIp(View view) {
-        if (this.ipAddressET == null) {
-            this.ipAddressET = (EditText) view;
-            this.ipAddressET.setText(getIpAddress() + ":" + ADB_PORT);
+    public void showIpAddress(View view) {
+        if (ipAddressET != null) {
+            ipAddressET.setText(getIpAddress() + ":" + ADB_PORT);
+        }
+    }
+
+    public void printStackTrace(Exception ex) {
+        ex.printStackTrace();
+        Logger.error(ex.toString());
+        StackTraceElement[] stackTraceElements = ex.getStackTrace();
+        for (StackTraceElement e : stackTraceElements) {
+            Logger.error(INDENT + "at " + e.toString());
+        }
+    }
+
+    public void tryThrowException(View view) {
+        try {
+            Integer.parseInt("asdf");
+        } catch (Exception ex) {
+            printStackTrace(ex);
         }
     }
 
     public void startAdbTcpIp(View view) {
+        Logger.info("Setting ADB PORT.");
         setProp(ADB_PORT_PROP_NAME, ADB_PORT);
         try {
-            if (isProcessRunning(ADB_PROCESS_NAME)) {
+            boolean isADBRunning = isProcessRunning(ADB_PROCESS_NAME);
+            if (isADBRunning) {
+                Logger.info("Stopping ADB.");
                 runRootCommand("stop " + ADB_PROCESS_NAME);
+            } else {
+                Logger.debug("ADB is not running.");
             }
         } catch (Exception ex) {
-            ex.printStackTrace();
+            printStackTrace(ex);
         }
         runRootCommand("start " + ADB_PROCESS_NAME);
         Toast.makeText(this, "Starting " + ADB_PROCESS_NAME + ".", Toast.LENGTH_SHORT);
@@ -55,6 +83,7 @@ public class MainActivity extends Activity {
     }
 
     boolean runRootCommand(String cmd) {
+        Logger.debug("Trying to run command: " + cmd);
         Process process = null;
         DataOutputStream dos = null;
         try {
@@ -65,7 +94,7 @@ public class MainActivity extends Activity {
             dos.flush();
             process.waitFor();
         } catch (Exception ex) {
-            ex.printStackTrace();
+            printStackTrace(ex);
             return false;
         } finally {
             try {
@@ -74,7 +103,7 @@ public class MainActivity extends Activity {
                 }
                 process.destroy();
             } catch (Exception ex) {
-                ex.printStackTrace();
+                printStackTrace(ex);
             }
         }
         return true;

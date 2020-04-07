@@ -16,6 +16,11 @@
             android:onClick="startAdbTcpIp"
             android:text="start adb tcpip" />
 
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:onClick="tryThrowException"
+            android:text="throw Exception" />
     </LinearLayout>
 
     <LinearLayout
@@ -23,15 +28,33 @@
         android:layout_height="wrap_content">
 
         <EditText
+            android:id="@+id/ip_address"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:background="#000000"
             android:editable="false"
             android:hint="Tap to show IP Address"
-            android:onClick="setIpAddressETAndDisplayIp"
+            android:onClick="showIpAddress"
             android:textColor="#00FF00"
             android:typeface="monospace" />
     </LinearLayout>
 
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1">
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/log"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#000000"
+                android:typeface="monospace" />
+        </HorizontalScrollView>
+    </ScrollView>
 </LinearLayout>
