@@ -35,43 +35,51 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ipAddressET = (EditText) findViewById(R.id.ip_address);
-        showIpAddress(null);
         logTV = (TextView) findViewById(R.id.log);
         Logger.LOG_TEXT_VIEW = logTV;
     }
 
-    public static void getIpAddresses() throws SocketException {
+    public static void showAllNetworkInterfacesIPs() throws SocketException {
         Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
 
         while (networkInterfaces.hasMoreElements()) {
             NetworkInterface networkInterface = networkInterfaces.nextElement();
+            Logger.info("network interface name: " + networkInterface.getDisplayName());
+
             Enumeration<InetAddress> inetAddresses = networkInterface.getInetAddresses();
-            Logger.info("> " + networkInterface.getDisplayName());
 
             while (inetAddresses.hasMoreElements()) {
                 InetAddress inetAddress = inetAddresses.nextElement();
-                Logger.info(">> " + inetAddress.getHostName());
+                Logger.info("hostname: " + inetAddress.getHostName());
+
                 byte[] ipAddress = inetAddress.getAddress();
 
                 StringBuilder sb = new StringBuilder();
                 for (int i = 0; i < ipAddress.length; i++) {
-                    sb.append(ipAddress[i]);
+                    sb.append(ipAddress[i] & 0xff);
+
+                    if (i < ipAddress.length - 1) {
+                        sb.append('.');
+                    }
                 }
 
-                Logger.info(">>> " + sb.toString());
+                Logger.info("IP: " + sb.toString());
             }
         }
     }
 
-    public void showIpAddress(View view) {
-        if (ipAddressET != null) {
-            ipAddressET.setText(getIpAddress());
-        }
-
+    public void showAllIPs(View view) {
         try {
-            getIpAddresses();
+            showAllNetworkInterfacesIPs();
         } catch (Exception ex) {
             printStackTrace(ex);
+        }
+    }
+
+    public void showWifiIP(View view) {
+        String wifiIp = getWifiIp();
+        if (ipAddressET != null) {
+            ipAddressET.setText(wifiIp);
         }
     }
 
@@ -102,7 +110,7 @@ public class MainActivity extends Activity {
         Toast.makeText(this, "Starting " + ADB_PROCESS_NAME + ".", Toast.LENGTH_SHORT);
     }
 
-    String getIpAddress() {
+    String getWifiIp() {
         WifiManager wm = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
         String ip = Formatter.formatIpAddress(wm.getConnectionInfo().getIpAddress());
         return ip;
@@ -153,10 +161,12 @@ public class MainActivity extends Activity {
 
     boolean isProcessRunning(String name) throws IOException, InterruptedException {
         boolean running = false;
+        Logger.debug("> ps");
         Process process = Runtime.getRuntime().exec("ps");
         BufferedReader in = new BufferedReader(new InputStreamReader(process.getInputStream()));
         String line;
         while ((line = in.readLine()) != null) {
+            Logger.debug("< " + line);
             if (line.contains(name)) {
                 running = true;
                 break;

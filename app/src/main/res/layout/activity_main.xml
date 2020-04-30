@@ -19,32 +19,45 @@
         <Button
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:onClick="showIpAddress"
-            android:text="Show IPs" />
+            android:onClick="showAllIPs"
+            android:text="Show all IPs" />
 
         <EditText
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:background="#222222"
+            android:editable="false"
             android:hint="PORT"
-            android:inputType="number" />
+            android:text="5555"
+            android:textColor="#00FF00"
+            android:typeface="monospace" />
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:onClick="showWifiIP"
+            android:text="Show wifi IP" />
+
         <EditText
             android:id="@+id/ip_address"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
+            android:layout_height="match_parent"
             android:layout_weight="1"
-            android:background="#000000"
+            android:background="#222222"
             android:editable="false"
-            android:hint="Tap to show IP Address"
-            android:onClick="showIpAddress"
+            android:hint="Wifi IP"
             android:textColor="#00FF00"
             android:typeface="monospace" />
     </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"></LinearLayout>
 
     <ScrollView
         android:layout_width="match_parent"
