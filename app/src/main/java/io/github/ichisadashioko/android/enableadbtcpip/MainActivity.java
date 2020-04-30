@@ -9,9 +9,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.util.Enumeration;
 
 import android.text.format.Formatter;
 
@@ -35,9 +40,38 @@ public class MainActivity extends Activity {
         Logger.LOG_TEXT_VIEW = logTV;
     }
 
+    public static void getIpAddresses() throws SocketException {
+        Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
+
+        while (networkInterfaces.hasMoreElements()) {
+            NetworkInterface networkInterface = networkInterfaces.nextElement();
+            Enumeration<InetAddress> inetAddresses = networkInterface.getInetAddresses();
+            Logger.info("> " + networkInterface.getDisplayName());
+
+            while (inetAddresses.hasMoreElements()) {
+                InetAddress inetAddress = inetAddresses.nextElement();
+                Logger.info(">> " + inetAddress.getHostName());
+                byte[] ipAddress = inetAddress.getAddress();
+
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < ipAddress.length; i++) {
+                    sb.append(ipAddress[i]);
+                }
+
+                Logger.info(">>> " + sb.toString());
+            }
+        }
+    }
+
     public void showIpAddress(View view) {
         if (ipAddressET != null) {
-            ipAddressET.setText(getIpAddress() + ":" + ADB_PORT);
+            ipAddressET.setText(getIpAddress());
+        }
+
+        try {
+            getIpAddresses();
+        } catch (Exception ex) {
+            printStackTrace(ex);
         }
     }
 
@@ -47,14 +81,6 @@ public class MainActivity extends Activity {
         StackTraceElement[] stackTraceElements = ex.getStackTrace();
         for (StackTraceElement e : stackTraceElements) {
             Logger.error(INDENT + "at " + e.toString());
-        }
-    }
-
-    public void tryThrowException(View view) {
-        try {
-            Integer.parseInt("asdf");
-        } catch (Exception ex) {
-            printStackTrace(ex);
         }
     }
 
@@ -82,35 +108,47 @@ public class MainActivity extends Activity {
         return ip;
     }
 
-    boolean runRootCommand(String cmd) {
-        Logger.debug("Trying to run command: " + cmd);
-        Process process = null;
+    String runRootCommand(String cmd) {
+        Logger.debug("> " + cmd);
+        Process su = null;
         DataOutputStream dos = null;
+        DataInputStream dis = null;
+        StringBuilder sb = new StringBuilder();
         try {
-            process = Runtime.getRuntime().exec("su");
-            dos = new DataOutputStream(process.getOutputStream());
+            su = Runtime.getRuntime().exec("su");
+            dos = new DataOutputStream(su.getOutputStream());
+            dis = new DataInputStream(su.getInputStream());
             dos.writeBytes(cmd + "\n");
             dos.writeBytes("exit\n");
             dos.flush();
-            process.waitFor();
+            su.waitFor();
+
+            String line;
+            while ((line = dis.readLine()) != null) {
+                sb.append(line);
+            }
         } catch (Exception ex) {
             printStackTrace(ex);
-            return false;
         } finally {
             try {
                 if (dos != null) {
                     dos.close();
                 }
-                process.destroy();
+                if (dis != null) {
+                    dis.close();
+                }
+                su.destroy();
             } catch (Exception ex) {
                 printStackTrace(ex);
             }
         }
-        return true;
+
+        return sb.toString();
     }
 
-    boolean setProp(String property, String value) {
-        return runRootCommand("setprop " + property + " " + value);
+    String setProp(String property, String value) {
+        String cmd = "setprop " + property + " " + value;
+        return runRootCommand(cmd);
     }
 
     boolean isProcessRunning(String name) throws IOException, InterruptedException {
