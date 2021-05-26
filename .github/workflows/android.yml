@@ -19,7 +19,7 @@ jobs:
         java-version: '11'
         distribution: 'adopt'
 
-    - run: apt install tree
+    - run: sudo apt install tree
 
     - run: gradle wrapper
 
